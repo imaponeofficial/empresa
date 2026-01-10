@@ -187991,23 +187991,88 @@
         }
         
         function ativarLocalizacao() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    map.flyTo({ 
-                        center: [pos.coords.longitude, pos.coords.latitude], 
-                        zoom: 16, 
-                        duration: 1500 
-                    });
-                    new maplibregl.Marker({ color: '#D4AF37' })
-                        .setLngLat([pos.coords.longitude, pos.coords.latitude])
-                        .addTo(map);
-                }, (error) => { 
-                    alert('❌ Não foi possível obter sua localização.'); 
-                });
-            } else { 
-                alert('❌ Geolocalização não suportada.'); 
-            }
-        }
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const userLocation = [pos.coords.longitude, pos.coords.latitude];
+            
+            // Remove rota antiga se existir
+            if (map.getLayer('route-line')) map.removeLayer('route-line');
+            if (map.getSource('route')) map.removeSource('route');
+            
+            // Cria linha de rota
+            map.addSource('route', {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: [userLocation, LOTEAMENTO_DATA.centro]
+                    }
+                }
+            });
+            
+            // Adiciona a linha no mapa
+            map.addLayer({
+                id: 'route-line',
+                type: 'line',
+                source: 'route',
+                layout: {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                paint: {
+                    'line-color': '#D4AF37',
+                    'line-width': 4,
+                    'line-opacity': 0.8
+                }
+            });
+            
+            // Adiciona marcador do usuario
+            new maplibregl.Marker({ color: '#25D366' })
+                .setLngLat(userLocation)
+                .setPopup(new maplibregl.Popup().setHTML('<strong>Voce esta aqui</strong>'))
+                .addTo(map);
+            
+            // Calcula distancia
+            const R = 6371; // Raio da Terra em km
+            const lat1 = pos.coords.latitude * Math.PI / 180;
+            const lat2 = LOTEAMENTO_DATA.centro[1] * Math.PI / 180;
+            const dLat = lat2 - lat1;
+            const dLon = (LOTEAMENTO_DATA.centro[0] - pos.coords.longitude) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(lat1) * Math.cos(lat2) *
+                     Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = (R * c).toFixed(1);
+            
+            // Ajusta o mapa para mostrar ambos os pontos
+            const bounds = new maplibregl.LngLatBounds()
+                .extend(userLocation)
+                .extend(LOTEAMENTO_DATA.centro);
+            
+            map.fitBounds(bounds, {
+                padding: 80,
+                duration: 1500
+            });
+            
+            // Mostra distancia em um popup temporario
+            setTimeout(() => {
+                new maplibregl.Popup({ closeButton: false })
+                    .setLngLat([
+                        (userLocation[0] + LOTEAMENTO_DATA.centro[0]) / 2,
+                        (userLocation[1] + LOTEAMENTO_DATA.centro[1]) / 2
+                    ])
+                    .setHTML('<strong>' + distance + ' km</strong>')
+                    .addTo(map);
+            }, 1600);
+            
+        }, (error) => { 
+            alert('Nao foi possivel obter sua localizacao.'); 
+        });
+    } else { 
+        alert('Geolocalizacao nao suportada.'); 
+    }
+}
         
         window.onload = () => {
             inicializarMapa();
