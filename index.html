@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loteamentos Interativos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: none;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            color: #000;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            color: rgba(0,0,0,0.7);
+            font-weight: 600;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #888;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(212, 175, 55, 0.2);
+            border-top-color: #D4AF37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .card {
+            background: #242424;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #D4AF37;
+            box-shadow: none;
+            background: rgba(255,255,255,0.08);
+        }
+        
+        .card-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #395f2b 0%, #214226 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-image::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(10%, 10%); }
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #D4AF37;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-desc {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .card-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 0.8rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #D4AF37;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+            margin-top: 0.3rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #D4AF37 0%, #B8941E 100%);
+            color: #000;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            text-align: center;
+            transition: all 0.3s;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: none;
+        }
+        
+        .badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(212, 175, 55, 0.9);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            z-index: 10;
+        }
+        
+        .badge.lancamento {
+            background: rgba(40, 167, 69, 0.9);
+            color: #fff;
+        }
+        
+        .badge.ultimas {
+            background: rgba(255, 193, 7, 0.9);
+            color: #000;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #888;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 4rem;
+        }
+        
+        footer a {
+            color: #D4AF37;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .no-loteamentos {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 15px;
+            border: 1px dashed #dc3545;
+            margin-top: 2rem;
+        }
+        
+        .no-loteamentos h3 {
+            color: #dc3545;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.8rem; }
+            .grid { grid-template-columns: 1fr; gap: 1.5rem; }
+            .container { margin: 2rem auto; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class=""></i> Loteamentos Disponíveis</h1>
+        <p>Mapeando Oportunidades</p>
+    </header>
+    
+    <div class="container">
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p style="color: #000; font-weight: 600;"> Carregando loteamentos...</p>
+        </div>
+        
+        <div id="loteamentos-grid" class="grid" style="display: none;"></div>
+    </div>
+    
+    <footer>
+        <p style="color: #000;">2025 - <strong>ImapOne</strong> - Sistema de Gestão de Loteamentos</p>
+        <p style="margin-top: 1rem;">
+            <a href="https://wa.me/5585999999999" target="_blank">
+                <i class="fab fa-whatsapp"></i> Entre em Contato
+            </a>
+        </p>
+    </footer>
+
+    <script>
+        // 🎯 CONFIGURAÇÃO
+        const GITHUB_USER = 'imaponeofficial';
+        const GITHUB_REPO = 'loteamento';
+        const GITHUB_BRANCH = 'main';
+
+        // 🎨 Mapeamento de ícones por palavra-chave
+        const EMOJI_MAP = {
+            'sol': 'fa-sun',
+            'mar': 'fa-water',
+            'praia': 'fa-umbrella-beach',
+            'lago': 'fa-water',
+            'serra': 'fa-mountain',
+            'monte': 'fa-mountain',
+            'jardim': 'fa-seedling',
+            'verde': 'fa-tree',
+            'vista': 'fa-eye',
+            'paraiso': 'fa-umbrella-beach',
+            'reserva': 'fa-leaf',
+            'campo': 'fa-tree',
+            'vale': 'fa-mountain-sun',
+            'floresta': 'fa-tree',
+            'rio': 'fa-water',
+            'default': 'fa-map-location-dot'
+        };
+
+        async function buscarLoteamentos() {
+            try {
+                const response = await fetch(
+                    `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents?ref=${GITHUB_BRANCH}`
+                );
+                
+                if (!response.ok) throw new Error('Erro ao buscar repositório');
+                
+                const files = await response.json();
+                
+                // Filtra apenas arquivos .html válidos
+                const loteamentos = files.filter(file => 
+                    file.name.endsWith('.html') && 
+                    file.name !== 'index.html' &&
+                    !file.name.includes('test') &&
+                    !file.name.includes('github_pages')
+                );
+                
+                if (loteamentos.length === 0) {
+                    mostrarMensagemVazia();
+                    return;
+                }
+                
+                // Processa cada loteamento
+                await processarLoteamentos(loteamentos);
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div style="color: #dc3545; text-align: center; padding: 2rem;">
+                        <h3>❌ Erro ao carregar loteamentos</h3>
+                        <p style="color: #888; margin-top: 1rem;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function processarLoteamentos(loteamentos) {
+            const grid = document.getElementById('loteamentos-grid');
+            const loading = document.getElementById('loading');
+            
+            grid.innerHTML = '';
+            
+            for (const lote of loteamentos) {
+                const card = await criarCard(lote);
+                grid.appendChild(card);
+            }
+            
+            loading.style.display = 'none';
+            grid.style.display = 'grid';
+        }
+
+        async function criarCard(lote) {
+            // Extrai dados do arquivo
+            const dados = await extrairDadosDoHTML(lote.name);
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => window.location.href = lote.name;
+            
+            // Define badge baseado na disponibilidade
+            let badge = '';
+            if (dados.disponiveis > dados.total * 0.8) {
+                badge = '<div class="badge lancamento">LANÇAMENTO</div>';
+            } else if (dados.disponiveis <= 10 && dados.disponiveis > 0) {
+                badge = '<div class="badge ultimas">ÚLTIMAS UNIDADES</div>';
+            } else if (dados.disponiveis === 0) {
+                badge = '<div class="badge" style="background: rgba(220, 53, 69, 0.9); color: #fff;">ESGOTADO</div>';
+            }
+            
+            card.innerHTML = `
+                ${badge}
+                <div class="card-image">
+                    <i class="fas ${dados.icone}"></i>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">${dados.nome}</h3>
+                    <p class="card-desc">${dados.descricao}</p>
+                    
+                    <div class="card-stats">
+                        <div class="stat">
+                            <div class="stat-value">${dados.total}</div>
+                            <div class="stat-label">Lotes</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${dados.disponiveis}</div>
+                            <div class="stat-label">Disponíveis</div>
+                        </div>
+                    </div>
+                    
+                    <a href="${lote.name}" class="btn">
+                        <i class="fas fa-map-marked-alt"></i> Abrir Mapa Interativo
+                    </a>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        async function extrairDadosDoHTML(filename) {
+            try {
+                // Baixa o arquivo HTML
+                const response = await fetch(filename);
+                const html = await response.text();
+                
+                // Cria um parser DOM
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extrai nome do loteamento
+                const nomeElement = doc.querySelector('title') || doc.querySelector('h1');
+                let nome = nomeElement ? nomeElement.textContent : formatarNome(filename);
+                nome = nome.replace(' - Mapa Interativo', '').trim();
+                
+                // Busca dados dos lotes no JavaScript do HTML
+                const scriptContent = html.match(/const LOTEAMENTO_DATA\s*=\s*\{[\s\S]*?\};/);
+                
+                let total = 0;
+                let disponiveis = 0;
+                let reservados = 0;
+                let vendidos = 0;
+                
+                if (scriptContent) {
+                    const dataMatch = scriptContent[0].match(/lotes:\s*(\[[\s\S]*?\])/);
+                    if (dataMatch) {
+                        try {
+                            const lotesStr = dataMatch[1];
+                            const lotes = eval(lotesStr);
+                            
+                            total = lotes.length;
+                            
+                            lotes.forEach(lote => {
+                                const status = lote.properties?.user_status;
+                                if (status === 'available') disponiveis++;
+                                else if (status === 'reserved') reservados++;
+                                else if (status === 'sold') vendidos++;
+                            });
+                        } catch (e) {
+                            console.error('Erro ao processar lotes:', e);
+                        }
+                    }
+                }
+                
+                return {
+                    nome: nome,
+                    descricao: gerarDescricao(nome, disponiveis, total),
+                    icone: obterIcone(filename),
+                    total: total,
+                    disponiveis: disponiveis,
+                    reservados: reservados,
+                    vendidos: vendidos
+                };
+                
+            } catch (error) {
+                console.error('Erro ao extrair dados:', error);
+                return {
+                    nome: formatarNome(filename),
+                    descricao: 'Loteamento com infraestrutura completa e localização privilegiada.',
+                    icone: 'fa-map-location-dot',
+                    total: 0,
+                    disponiveis: 0,
+                    reservados: 0,
+                    vendidos: 0
+                };
+            }
+        }
+
+        function formatarNome(filename) {
+            return filename
+                .replace('.html', '')
+                .replace(/loteamento-/gi, '')
+                .replace(/-/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function obterIcone(filename) {
+            const name = filename.toLowerCase();
+            for (const [key, icon] of Object.entries(EMOJI_MAP)) {
+                if (name.includes(key)) return icon;
+            }
+            return EMOJI_MAP.default;
+        }
+
+        function gerarDescricao(nome, disponiveis, total) {
+            const descricoes = [
+                'Loteamento residencial com infraestrutura completa e localização privilegiada.',
+                'Empreendimento moderno com área de lazer e segurança 24h.',
+                'Lotes planejados com toda a infraestrutura necessária para construção.',
+                'Excelente oportunidade de investimento em localização estratégica.',
+                'Loteamento com documentação regularizada e pronto para construir.'
+            ];
+            
+            if (disponiveis === 0) {
+                return 'Loteamento completamente vendido. Entre em contato para outras opções.';
+            }
+            
+            if (disponiveis <= 5) {
+                return 'Últimas unidades disponíveis! Aproveite esta oportunidade única.';
+            }
+            
+            return descricoes[Math.floor(Math.random() * descricoes.length)];
+        }
+
+        function mostrarMensagemVazia() {
+            const loading = document.getElementById('loading');
+            loading.innerHTML = `
+                <div class="no-loteamentos">
+                    <h3>Nenhum loteamento encontrado</h3>
+                    <p style="color: #888;">Faça upload de arquivos <strong>.html</strong> no repositório para vê-los aqui automaticamente.</p>
+                </div>
+            `;
+        }
+
+        // Inicializa ao carregar
+        window.addEventListener('load', buscarLoteamentos);
+    </script>
+</body>
+</html>
