@@ -602,70 +602,83 @@
                 const response = await fetch(url);
                 const html = await response.text();
                 
-                // Busca pelo centro do mapa (view do Leaflet) - tenta vários padrões
-                let viewMatch = html.match(/map\.setView\(\[([^,]+),\s*([^\]]+)\]/);
+                let lat, lng;
                 
-                // Tenta padrão alternativo
-                if (!viewMatch) {
-                    viewMatch = html.match(/setView\(\[\s*([^,]+),\s*([^\]]+)\s*\]/);
+                // 🎯 Padrão 1: centro: [-40.8416, -2.8909] (LOTEAMENTO_DATA)
+                let match = html.match(/centro:\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
+                if (match) {
+                    lng = parseFloat(match[1]);
+                    lat = parseFloat(match[2]);
                 }
                 
-                // Tenta buscar coordenadas em L.map
-                if (!viewMatch) {
-                    viewMatch = html.match(/L\.map\([^)]+\)\.setView\(\[([^,]+),\s*([^\]]+)\]/);
+                // 🎯 Padrão 2: center: [-40.8416, -2.8909] (MapLibre)
+                if (!match) {
+                    match = html.match(/center:\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
+                    if (match) {
+                        lng = parseFloat(match[1]);
+                        lat = parseFloat(match[2]);
+                    }
                 }
                 
-                if (viewMatch) {
-                    const lat = parseFloat(viewMatch[1].trim());
-                    const lng = parseFloat(viewMatch[2].trim());
+                // 🎯 Padrão 3: setView([lat, lng], zoom) (Leaflet)
+                if (!match) {
+                    match = html.match(/setView\(\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
+                    if (match) {
+                        lat = parseFloat(match[1]);
+                        lng = parseFloat(match[2]);
+                    }
+                }
+                
+                // 🎯 Padrão 4: CENTRO_LOTEAMENTO = [-40.8416, -2.8909] (Standalone com Supabase)
+                if (!match) {
+                    match = html.match(/CENTRO_LOTEAMENTO\s*=\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
+                    if (match) {
+                        lng = parseFloat(match[1]);
+                        lat = parseFloat(match[2]);
+                    }
+                }
+                
+                if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+                    console.log(`✅ Coordenadas: Lat ${lat}, Lng ${lng}`);
                     
-                    console.log(`Coordenadas encontradas: ${lat}, ${lng}`);
+                    // Delay para evitar rate limit
+                    await new Promise(resolve => setTimeout(resolve, 1500));
                     
-                    // Delay para respeitar rate limit da API (1 req/segundo)
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Usa API de geocoding reverso com headers adequados
+                    // API BigDataCloud (sem rate limit e mais confiável)
                     const geoResponse = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&zoom=10`,
-                        {
-                            headers: {
-                                'User-Agent': 'iMapOne/1.0'
-                            }
-                        }
+                        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=pt`
                     );
                     
-                    if (!geoResponse.ok) {
-                        console.error('Erro na API de geocoding:', geoResponse.status);
-                        return 'Processando localização...';
-                    }
-                    
-                    const geoData = await geoResponse.json();
-                    console.log('Dados de localização:', geoData);
-                    
-                    if (geoData && geoData.address) {
-                        const cidade = geoData.address.city || 
-                                      geoData.address.town || 
-                                      geoData.address.village || 
-                                      geoData.address.municipality || 
-                                      geoData.address.county ||
-                                      geoData.address.state_district ||
-                                      geoData.address.state;
+                    if (geoResponse.ok) {
+                        const geoData = await geoResponse.json();
+                        console.log('📍 Localização:', geoData);
                         
-                        if (cidade) {
+                        const cidade = geoData.city || 
+                                      geoData.locality || 
+                                      geoData.principalSubdivision ||
+                                      geoData.countryName;
+                        
+                        const estado = geoData.principalSubdivision || '';
+                        
+                        if (cidade && estado) {
+                            console.log(`✅ Cidade: ${cidade} - ${estado}`);
+                            return `${cidade} - ${estado}`;
+                        } else if (cidade) {
+                            console.log(`✅ Cidade: ${cidade}`);
                             return cidade;
                         }
                     }
                     
-                    // Se não encontrou cidade, retorna coordenadas
                     return `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
                 }
                 
-                console.log('Coordenadas não encontradas no HTML');
+                console.warn('❌ Coordenadas não encontradas no HTML');
+                return 'Localização não disponível';
+                
             } catch (error) {
-                console.error('Erro ao extrair cidade:', error);
+                console.error('💥 Erro:', error);
+                return 'Localização não disponível';
             }
-            
-            return 'Localização não disponível';
         }
         
         async function extrairWhatsApp(url) {
