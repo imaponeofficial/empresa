@@ -187990,7 +187990,6 @@
             }); 
         }
         
-        
         function ativarLocalizacao() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -188070,13 +188069,8 @@
                     }
                 });
                 
-                // Adiciona marcador do usuario
-                const userMarkerEl = document.createElement('div');
-                userMarkerEl.className = 'location-marker';
-                userMarkerEl.style.cssText = 'background: #25D366; width: 45px; height: 45px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer;';
-                userMarkerEl.innerHTML = '📍';
-                
-                new maplibregl.Marker({ element: userMarkerEl })
+                // Marcador do usuario - PINO VERDE ELEGANTE
+                new maplibregl.Marker({ color: '#25D366' })
                     .setLngLat(userLocation)
                     .setPopup(
                         new maplibregl.Popup({ offset: 25 })
@@ -188085,13 +188079,8 @@
                     .addTo(map)
                     .togglePopup();
                 
-                // Marcador do destino
-                const destMarkerEl = document.createElement('div');
-                destMarkerEl.className = 'location-marker';
-                destMarkerEl.style.cssText = 'background: #D4AF37; width: 45px; height: 45px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer;';
-                destMarkerEl.innerHTML = '🎯';
-                
-                new maplibregl.Marker({ element: destMarkerEl })
+                // Marcador do destino - PINO DOURADO ELEGANTE
+                new maplibregl.Marker({ color: '#D4AF37' })
                     .setLngLat(LOTEAMENTO_DATA.centro)
                     .setPopup(
                         new maplibregl.Popup({ offset: 25 })
@@ -188110,18 +188099,19 @@
                     duration: 1500
                 });
                 
-                // Mostra distancia e tempo no centro da rota
+                // Card elegante de distancia e tempo
                 setTimeout(function() {
                     const middleIndex = Math.floor(routeCoords.length / 2);
                     const middleCoord = routeCoords[middleIndex];
                     
                     new maplibregl.Popup({ 
-                        closeButton: false,
-                        closeOnClick: false,
-                        anchor: 'center'
+                        closeButton: true,
+                        closeOnClick: true,
+                        anchor: 'center',
+                        maxWidth: '300px'
                     })
                         .setLngLat(middleCoord)
-                        .setHTML('<div style="background: #000; color: #D4AF37; padding: 12px 20px; border-radius: 10px; font-weight: bold; border: 3px solid #D4AF37; box-shadow: 0 6px 20px rgba(0,0,0,0.8); text-align: center;"><div style="font-size: 20px; margin-bottom: 5px;">🚗 ' + distance + ' km</div><div style="font-size: 16px; color: #fff;">⏱ ' + duration + ' min</div></div>')
+                        .setHTML('<div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 20px; border-radius: 15px; border: 2px solid #D4AF37; box-shadow: 0 10px 40px rgba(0,0,0,0.8); font-family: Arial, sans-serif;"><div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(212, 175, 55, 0.3);"><div style="background: rgba(212, 175, 55, 0.2); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #D4AF37; font-weight: bold;">km</div><div><div style="color: #D4AF37; font-size: 28px; font-weight: bold; line-height: 1;">' + distance + '</div><div style="color: #999; font-size: 12px; margin-top: 3px;">quilometros</div></div></div><div style="display: flex; align-items: center; gap: 15px;"><div style="background: rgba(212, 175, 55, 0.2); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #D4AF37; font-weight: bold;">min</div><div><div style="color: #fff; font-size: 28px; font-weight: bold; line-height: 1;">' + duration + '</div><div style="color: #999; font-size: 12px; margin-top: 3px;">minutos de viagem</div></div></div></div>')
                         .addTo(map);
                 }, 2000);
                 
@@ -188177,6 +188167,7 @@
         alert('Seu navegador nao suporta geolocalizacao.'); 
     }
 }
+        
         window.onload = () => {
             inicializarMapa();
             console.log('✅ Sol Poente - Mapa Interativo');
