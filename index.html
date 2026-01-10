@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ImapOne - Loteamentos</title>
+    <title>iMapOne - Loteamentos Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { 
@@ -137,7 +137,7 @@
         
         /* Stats */
         .stats {
-            display: none;
+            display: flex;
             gap: 1.5rem;
         }
         
@@ -229,7 +229,7 @@
         
         .loteamento-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 0px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             border-color: rgba(37, 99, 235, 0.5);
             background: rgba(255, 255, 255, 0.05);
         }
@@ -483,7 +483,7 @@
         <div class="header-content">
             <div class="brand">
                 <div class="brand-text">
-                    <h1>ImapOne</h1>
+                    <h1>iMapOne</h1>
                     <p>Loteamentos Premium</p>
                 </div>
             </div>
@@ -528,7 +528,7 @@
         <div id="loteamentos-container" class="loteamentos-grid" style="display: none;"></div>
         
         <div class="footer">
-            <p><strong>ImapOne</strong> - Tecnologia em Geolocalização</p>
+            <p><strong>iMapOne</strong> - Tecnologia em Geolocalização</p>
             <p>Mapas Interativos de Alta Qualidade</p>
             <p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.7;">
                 Powered by GitHub Pages | Atualizado automaticamente
@@ -602,33 +602,70 @@
                 const response = await fetch(url);
                 const html = await response.text();
                 
-                // Busca pelo centro do mapa (view do Leaflet)
-                const viewMatch = html.match(/map\.setView\(\[([^,]+),\s*([^\]]+)\]/);
+                // Busca pelo centro do mapa (view do Leaflet) - tenta vários padrões
+                let viewMatch = html.match(/map\.setView\(\[([^,]+),\s*([^\]]+)\]/);
+                
+                // Tenta padrão alternativo
+                if (!viewMatch) {
+                    viewMatch = html.match(/setView\(\[\s*([^,]+),\s*([^\]]+)\s*\]/);
+                }
+                
+                // Tenta buscar coordenadas em L.map
+                if (!viewMatch) {
+                    viewMatch = html.match(/L\.map\([^)]+\)\.setView\(\[([^,]+),\s*([^\]]+)\]/);
+                }
                 
                 if (viewMatch) {
-                    const lat = parseFloat(viewMatch[1]);
-                    const lng = parseFloat(viewMatch[2]);
+                    const lat = parseFloat(viewMatch[1].trim());
+                    const lng = parseFloat(viewMatch[2].trim());
                     
-                    // Usa API de geocoding reverso
+                    console.log(`Coordenadas encontradas: ${lat}, ${lng}`);
+                    
+                    // Delay para respeitar rate limit da API (1 req/segundo)
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Usa API de geocoding reverso com headers adequados
                     const geoResponse = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR`
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&zoom=10`,
+                        {
+                            headers: {
+                                'User-Agent': 'iMapOne/1.0'
+                            }
+                        }
                     );
-                    const geoData = await geoResponse.json();
                     
-                    if (geoData.address) {
-                        return geoData.address.city || 
-                               geoData.address.town || 
-                               geoData.address.village || 
-                               geoData.address.municipality || 
-                               geoData.address.state || 
-                               'Localização não identificada';
+                    if (!geoResponse.ok) {
+                        console.error('Erro na API de geocoding:', geoResponse.status);
+                        return 'Processando localização...';
                     }
+                    
+                    const geoData = await geoResponse.json();
+                    console.log('Dados de localização:', geoData);
+                    
+                    if (geoData && geoData.address) {
+                        const cidade = geoData.address.city || 
+                                      geoData.address.town || 
+                                      geoData.address.village || 
+                                      geoData.address.municipality || 
+                                      geoData.address.county ||
+                                      geoData.address.state_district ||
+                                      geoData.address.state;
+                        
+                        if (cidade) {
+                            return cidade;
+                        }
+                    }
+                    
+                    // Se não encontrou cidade, retorna coordenadas
+                    return `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
                 }
+                
+                console.log('Coordenadas não encontradas no HTML');
             } catch (error) {
                 console.error('Erro ao extrair cidade:', error);
             }
             
-            return 'Cidade não identificada';
+            return 'Localização não disponível';
         }
         
         async function extrairWhatsApp(url) {
