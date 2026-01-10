@@ -187990,6 +187990,7 @@
             }); 
         }
         
+        
         function ativarLocalizacao() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -188000,18 +188001,26 @@
             if (map.getLayer('route-arrows')) map.removeLayer('route-arrows');
             if (map.getSource('route')) map.removeSource('route');
             
+            // Remove marcadores antigos
+            const oldMarkers = document.querySelectorAll('.location-marker');
+            oldMarkers.forEach(m => m.remove());
+            
             try {
-                // Busca rota real usando OpenRouteService (API gratuita)
-                const url = 'https://api.openrouteservice.org/v2/directions/driving-car?api_key=5b3ce3597851110001cf6248e6c6e0c8c8f24b0b8b3e4f4e4b4b4b4b&start=' + userLocation[0] + ',' + userLocation[1] + '&end=' + LOTEAMENTO_DATA.centro[0] + ',' + LOTEAMENTO_DATA.centro[1];
+                // Busca rota real usando OSRM (gratuito, sem API key)
+                const url = 'https://router.project-osrm.org/route/v1/driving/' + userLocation[0] + ',' + userLocation[1] + ';' + LOTEAMENTO_DATA.centro[0] + ',' + LOTEAMENTO_DATA.centro[1] + '?overview=full&geometries=geojson';
                 
                 const response = await fetch(url);
                 
                 if (!response.ok) throw new Error('Erro ao buscar rota');
                 
                 const data = await response.json();
-                const routeCoords = data.features[0].geometry.coordinates;
-                const distance = (data.features[0].properties.segments[0].distance / 1000).toFixed(1);
-                const duration = Math.round(data.features[0].properties.segments[0].duration / 60);
+                
+                if (!data.routes || data.routes.length === 0) throw new Error('Nenhuma rota encontrada');
+                
+                const route = data.routes[0];
+                const routeCoords = route.geometry.coordinates;
+                const distance = (route.distance / 1000).toFixed(1);
+                const duration = Math.round(route.duration / 60);
                 
                 // Cria linha de rota REAL seguindo as ruas
                 map.addSource('route', {
@@ -188025,7 +188034,7 @@
                     }
                 });
                 
-                // Adiciona a linha no mapa com animacao
+                // Adiciona a linha no mapa
                 map.addLayer({
                     id: 'route-line',
                     type: 'line',
@@ -188036,68 +188045,72 @@
                     },
                     paint: {
                         'line-color': '#D4AF37',
-                        'line-width': 5,
-                        'line-opacity': 0.9
+                        'line-width': 6,
+                        'line-opacity': 0.8
                     }
                 });
                 
-                // Adiciona setas na rota para indicar direcao
+                // Adiciona setas na rota
                 map.addLayer({
                     id: 'route-arrows',
                     type: 'symbol',
                     source: 'route',
                     layout: {
                         'symbol-placement': 'line',
-                        'symbol-spacing': 50,
-                        'text-field': '▶',
-                        'text-size': 16,
+                        'symbol-spacing': 80,
+                        'text-field': '→',
+                        'text-size': 20,
                         'text-keep-upright': false,
                         'text-rotation-alignment': 'map'
                     },
                     paint: {
                         'text-color': '#D4AF37',
                         'text-halo-color': '#000',
-                        'text-halo-width': 2
+                        'text-halo-width': 3
                     }
                 });
                 
-                // Adiciona marcador do usuario com texto VISIVEL
+                // Adiciona marcador do usuario
                 const userMarkerEl = document.createElement('div');
-                userMarkerEl.style.cssText = 'background: #25D366; width: 40px; height: 40px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 20px;';
+                userMarkerEl.className = 'location-marker';
+                userMarkerEl.style.cssText = 'background: #25D366; width: 45px; height: 45px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer;';
                 userMarkerEl.innerHTML = '📍';
                 
                 new maplibregl.Marker({ element: userMarkerEl })
                     .setLngLat(userLocation)
                     .setPopup(
                         new maplibregl.Popup({ offset: 25 })
-                            .setHTML('<div style="color: #000; font-weight: bold; padding: 5px;">Voce esta aqui</div>')
+                            .setHTML('<div style="color: #000; font-weight: bold; padding: 8px; font-size: 14px;">Voce esta aqui</div>')
                     )
                     .addTo(map)
                     .togglePopup();
                 
                 // Marcador do destino
                 const destMarkerEl = document.createElement('div');
-                destMarkerEl.style.cssText = 'background: #BB6140; width: 40px; height: 40px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 20px;';
-                destMarkerEl.innerHTML = '🏠';
+                destMarkerEl.className = 'location-marker';
+                destMarkerEl.style.cssText = 'background: #D4AF37; width: 45px; height: 45px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer;';
+                destMarkerEl.innerHTML = '🎯';
                 
                 new maplibregl.Marker({ element: destMarkerEl })
                     .setLngLat(LOTEAMENTO_DATA.centro)
                     .setPopup(
                         new maplibregl.Popup({ offset: 25 })
-                            .setHTML('<div style="color: #000; font-weight: bold; padding: 5px;">' + LOTEAMENTO_DATA.nome + '</div>')
+                            .setHTML('<div style="color: #000; font-weight: bold; padding: 8px; font-size: 14px;">' + LOTEAMENTO_DATA.nome + '</div>')
                     )
                     .addTo(map);
                 
                 // Ajusta o mapa para mostrar toda a rota
                 const bounds = new maplibregl.LngLatBounds();
-                routeCoords.forEach(coord => bounds.extend(coord));
+                routeCoords.forEach(function(coord) {
+                    bounds.extend(coord);
+                });
                 
                 map.fitBounds(bounds, {
-                    padding: 80,
+                    padding: 100,
                     duration: 1500
                 });
                 
-                // Mostra distancia e tempo no centro da rota com FUNDO ESCURO
+                // Mostra distancia e tempo no centro da rota
                 setTimeout(function() {
                     const middleIndex = Math.floor(routeCoords.length / 2);
                     const middleCoord = routeCoords[middleIndex];
@@ -188105,12 +188118,14 @@
                     new maplibregl.Popup({ 
                         closeButton: false,
                         closeOnClick: false,
-                        className: 'route-info-popup'
+                        anchor: 'center'
                     })
                         .setLngLat(middleCoord)
-                        .setHTML('<div style="background: rgba(0, 0, 0, 0.9); color: #D4AF37; padding: 10px 15px; border-radius: 8px; font-weight: bold; border: 2px solid #D4AF37; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"><div style="font-size: 18px; margin-bottom: 3px;">📍 ' + distance + ' km</div><div style="font-size: 14px; color: #fff;">⏱️ ~' + duration + ' minutos</div></div>')
+                        .setHTML('<div style="background: #000; color: #D4AF37; padding: 12px 20px; border-radius: 10px; font-weight: bold; border: 3px solid #D4AF37; box-shadow: 0 6px 20px rgba(0,0,0,0.8); text-align: center;"><div style="font-size: 20px; margin-bottom: 5px;">🚗 ' + distance + ' km</div><div style="font-size: 16px; color: #fff;">⏱ ' + duration + ' min</div></div>')
                         .addTo(map);
-                }, 1600);
+                }, 2000);
+                
+                console.log('Rota calculada com sucesso! Distancia: ' + distance + ' km, Tempo: ' + duration + ' min');
                 
             } catch (error) {
                 console.error('Erro ao buscar rota:', error);
@@ -188131,24 +188146,37 @@
                     id: 'route-line',
                     type: 'line',
                     source: 'route',
+                    layout: {
+                        'line-cap': 'round',
+                        'line-join': 'round'
+                    },
                     paint: {
-                        'line-color': '#D4AF37',
+                        'line-color': '#FF6B6B',
                         'line-width': 4,
-                        'line-dasharray': [2, 2]
+                        'line-dasharray': [3, 3]
                     }
                 });
                 
-                alert('Nao foi possivel calcular a rota. Mostrando linha reta.');
+                // Calcula distancia em linha reta
+                const R = 6371;
+                const lat1 = pos.coords.latitude * Math.PI / 180;
+                const lat2 = LOTEAMENTO_DATA.centro[1] * Math.PI / 180;
+                const dLat = lat2 - lat1;
+                const dLon = (LOTEAMENTO_DATA.centro[0] - pos.coords.longitude) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const distance = (R * c).toFixed(1);
+                
+                alert('Rota por ruas indisponivel. Mostrando distancia em linha reta: ' + distance + ' km');
             }
             
         }, function(error) { 
-            alert('Nao foi possivel obter sua localizacao.'); 
+            alert('Nao foi possivel obter sua localizacao. Erro: ' + error.message); 
         });
     } else { 
-        alert('Geolocalizacao nao suportada.'); 
+        alert('Seu navegador nao suporta geolocalizacao.'); 
     }
 }
-        
         window.onload = () => {
             inicializarMapa();
             console.log('✅ Sol Poente - Mapa Interativo');
