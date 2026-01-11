@@ -187767,6 +187767,10 @@ let routeMarkers = []; // Array para armazenar marcadores
     routeMarkers = [];
     routeActive = false;
     
+    // Remove popup de rota se existir
+    const existingPopup = document.querySelector('.route-info-popup');
+    if (existingPopup) existingPopup.remove();
+    
     const currentCenter = map.getCenter();
     const currentZoom = map.getZoom();
     map.setStyle(mapStyles[styleKey]);
@@ -188015,7 +188019,31 @@ let routeMarkers = []; // Array para armazenar marcadores
             routeMarkers.forEach(m => m.remove());
             routeMarkers = [];
             routeActive = false;
+            
+            // Remove popup se existir
+            const existingPopup = document.querySelector('.route-info-popup');
+            if (existingPopup) existingPopup.remove();
+            
             return;
+        }
+        
+        // Mostra loading
+        const loadingPopup = new maplibregl.Popup({ 
+            closeButton: false,
+            closeOnClick: false,
+            anchor: 'center',
+            className: 'loading-popup'
+        })
+            .setLngLat(LOTEAMENTO_DATA.centro)
+            .setHTML('<div style="background: rgba(26, 26, 26, 0.95); padding: 20px; border-radius: 12px; text-align: center; font-family: Arial, sans-serif;"><div style="width: 40px; height: 40px; border: 4px solid rgba(212, 175, 55, 0.2); border-top-color: #D4AF37; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #fff; font-size: 14px; font-weight: 600;">Buscando rota...</div></div>')
+            .addTo(map);
+        
+        // Adiciona animação de spin
+        if (!document.getElementById('route-loading-style')) {
+            const style = document.createElement('style');
+            style.id = 'route-loading-style';
+            style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
         }
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -188044,6 +188072,9 @@ let routeMarkers = []; // Array para armazenar marcadores
                 const routeCoords = route.geometry.coordinates;
                 const distance = (route.distance / 1000).toFixed(1);
                 const duration = Math.round(route.duration / 60);
+                
+                // Remove loading
+                loadingPopup.remove();
                 
                 // Cria linha de rota REAL seguindo as ruas
                 map.addSource('route', {
@@ -188096,22 +188127,13 @@ let routeMarkers = []; // Array para armazenar marcadores
                 // Marcador do usuario - PINO VERDE ELEGANTE
                 const userMarker = new maplibregl.Marker({ color: '#25D366' })
                     .setLngLat(userLocation)
-                    .setPopup(
-                        new maplibregl.Popup({ offset: 25 })
-                            .setHTML('<div style="color: #000; font-weight: bold; padding: 8px; font-size: 14px;">Voce esta aqui</div>')
-                    )
-                    .addTo(map)
-                    .togglePopup();
+                    .addTo(map);
                 
                 routeMarkers.push(userMarker);
                 
                 // Marcador do destino - PINO DOURADO ELEGANTE
                 const destMarker = new maplibregl.Marker({ color: '#D4AF37' })
                     .setLngLat(LOTEAMENTO_DATA.centro)
-                    .setPopup(
-                        new maplibregl.Popup({ offset: 25 })
-                            .setHTML('<div style="color: #000; font-weight: bold; padding: 8px; font-size: 14px;">' + LOTEAMENTO_DATA.nome + '</div>')
-                    )
                     .addTo(map);
                 
                 routeMarkers.push(destMarker);
@@ -188127,27 +188149,71 @@ let routeMarkers = []; // Array para armazenar marcadores
                     duration: 1500
                 });
                 
-                // Card elegante de distancia e tempo (REDUZIDO)
-                setTimeout(function() {
-                    const middleIndex = Math.floor(routeCoords.length / 2);
-                    const middleCoord = routeCoords[middleIndex];
+                // Cria popup permanente (sem botão X)
+                const middleIndex = Math.floor(routeCoords.length / 2);
+                const middleCoord = routeCoords[middleIndex];
+                
+                const routePopup = new maplibregl.Popup({ 
+                    closeButton: false,
+                    closeOnClick: false,
+                    anchor: 'center',
+                    maxWidth: '220px',
+                    className: 'route-info-popup'
+                })
+                    .setLngLat(middleCoord)
+                    .setHTML('<div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 12px; border-radius: 12px; border: 2px solid #D4AF37; box-shadow: 0 8px 30px rgba(0,0,0,0.7); font-family: Arial, sans-serif; cursor: pointer;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(212, 175, 55, 0.3);"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #D4AF37; font-weight: bold;">km</div><div><div style="color: #D4AF37; font-size: 20px; font-weight: bold; line-height: 1;">' + distance + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">quilometros</div></div></div><div style="display: flex; align-items: center; gap: 10px;"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #D4AF37; font-weight: bold;">min</div><div><div style="color: #fff; font-size: 20px; font-weight: bold; line-height: 1;">' + duration + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">minutos de viagem</div></div></div></div>')
+                    .addTo(map);
+                
+                // Fecha o popup ao clicar em qualquer lugar do mapa (exceto nos pinos/linha)
+                map.on('click', function(e) {
+                    // Verifica se clicou na linha da rota
+                    const features = map.queryRenderedFeatures(e.point, { layers: ['route-line'] });
                     
-                    new maplibregl.Popup({ 
-                        closeButton: true,
-                        closeOnClick: true,
-                        anchor: 'center',
-                        maxWidth: '220px'
-                    })
-                        .setLngLat(middleCoord)
-                        .setHTML('<div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 12px; border-radius: 12px; border: 2px solid #D4AF37; box-shadow: 0 8px 30px rgba(0,0,0,0.7); font-family: Arial, sans-serif;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(212, 175, 55, 0.3);"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #D4AF37; font-weight: bold;">km</div><div><div style="color: #D4AF37; font-size: 20px; font-weight: bold; line-height: 1;">' + distance + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">quilometros</div></div></div><div style="display: flex; align-items: center; gap: 10px;"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #D4AF37; font-weight: bold;">min</div><div><div style="color: #fff; font-size: 20px; font-weight: bold; line-height: 1;">' + duration + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">minutos de viagem</div></div></div></div>')
-                        .addTo(map);
-                }, 2000);
+                    if (features.length === 0) {
+                        // Clicou fora - remove popup
+                        routePopup.remove();
+                    }
+                });
+                
+                // Reabre popup ao clicar na linha da rota
+                map.on('click', 'route-line', function(e) {
+                    if (!routePopup.isOpen()) {
+                        routePopup.addTo(map);
+                    }
+                });
+                
+                // Reabre popup ao clicar nos pinos
+                userMarker.getElement().addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!routePopup.isOpen()) {
+                        routePopup.addTo(map);
+                    }
+                });
+                
+                destMarker.getElement().addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!routePopup.isOpen()) {
+                        routePopup.addTo(map);
+                    }
+                });
+                
+                // Cursor pointer na linha
+                map.on('mouseenter', 'route-line', function() {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+                
+                map.on('mouseleave', 'route-line', function() {
+                    map.getCanvas().style.cursor = '';
+                });
                 
                 routeActive = true; // Marca rota como ativa
                 console.log('Rota calculada com sucesso! Distancia: ' + distance + ' km, Tempo: ' + duration + ' min');
                 
             } catch (error) {
                 console.error('Erro ao buscar rota:', error);
+                
+                // Remove loading
+                loadingPopup.remove();
                 
                 // Fallback: linha reta se a API falhar
                 map.addSource('route', {
@@ -188190,6 +188256,7 @@ let routeMarkers = []; // Array para armazenar marcadores
             }
             
         }, function(error) { 
+            loadingPopup.remove();
             alert('Nao foi possivel obter sua localizacao. Erro: ' + error.message); 
         });
     } else { 
