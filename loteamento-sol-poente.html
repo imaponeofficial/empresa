@@ -47,6 +47,11 @@
         animation: smoothFadeIn 1.7s ease-out;
     }
     
+    keyframes smoothFadeIn {
+            from { opacity: 0; filter: blur(5px); }
+            to { opacity: 1; filter: blur(0); }
+        }
+    
     #map { 
         width: 100%; 
         height: calc(100vh - 90px); 
@@ -188044,7 +188049,7 @@ let routeMarkers = []; // Array para armazenar marcadores
             className: 'loading-popup'
         })
             .setLngLat(LOTEAMENTO_DATA.centro)
-            .setHTML('<div style="background: rgba(26, 26, 26, 0.95); padding: 20px; border-radius: 12px; text-align: center; font-family: Arial, sans-serif;"><div style="width: 40px; height: 40px; border: 4px solid rgba(212, 175, 55, 0.2); border-top-color: #D4AF37; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #fff; font-size: 14px; font-weight: 600;">Buscando rota...</div></div>')
+            .setHTML('<div style="background: rgba(26, 26, 26, 0.95); padding: 20px; border-radius: 12px; text-align: center; font-family: Arial, sans-serif;"><div style="width: 40px; height: 40px; border: 4px solid #D4AF37; border-top-color: #D4AF37; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #fff; font-size: 14px; font-weight: 600;">Buscando rota...</div></div>')
             .addTo(map);
         
         // Adiciona animação de spin
@@ -188170,7 +188175,7 @@ let routeMarkers = []; // Array para armazenar marcadores
                     className: 'route-info-popup'
                 })
                     .setLngLat(middleCoord)
-                    .setHTML('<div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 12px; border-radius: 12px; border: 2px solid #D4AF37; box-shadow: 0 8px 30px rgba(0,0,0,0.7); font-family: Arial, sans-serif; cursor: pointer;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(212, 175, 55, 0.3);"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #D4AF37; font-weight: bold;">km</div><div><div style="color: #D4AF37; font-size: 20px; font-weight: bold; line-height: 1;">' + distance + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">quilometros</div></div></div><div style="display: flex; align-items: center; gap: 10px;"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #D4AF37; font-weight: bold;">min</div><div><div style="color: #fff; font-size: 20px; font-weight: bold; line-height: 1;">' + duration + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">minutos de viagem</div></div></div></div>')
+                    .setHTML('<div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 12px; border-radius: 12px; border: 2px solid #D4AF37; box-shadow: 0 8px 30px rgba(0,0,0,0.7); font-family: Arial, sans-serif; cursor: pointer;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(212, 175, 55, 0.3);"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #D4AF37; font-weight: bold;">km</div><div><div style="color: #D4AF37; font-size: 20px; font-weight: bold; line-height: 1;">' + distance + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">quilometros</div></div></div><div style="display: flex; align-items: center; gap: 10px;"><div style="background: rgba(212, 175, 55, 0.2); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #D4AF37; font-weight: bold;">min</div><div><div style="color: #D4AF37; font-size: 20px; font-weight: bold; line-height: 1;">' + duration + '</div><div style="color: #999; font-size: 10px; margin-top: 2px;">minutos de viagem</div></div></div></div>')
                     .addTo(map);
                 
                 // Fecha o popup ao clicar em qualquer lugar do mapa (exceto nos pinos/linha)
