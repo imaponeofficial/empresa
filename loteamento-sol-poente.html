@@ -47,7 +47,7 @@
         animation: smoothFadeIn 1.7s ease-out;
     }
     
-    keyframes smoothFadeIn {
+    @keyframes smoothFadeIn {
             from { opacity: 0; filter: blur(5px); }
             to { opacity: 1; filter: blur(0); }
         }
@@ -188049,7 +188049,7 @@ let routeMarkers = []; // Array para armazenar marcadores
             className: 'loading-popup'
         })
             .setLngLat(LOTEAMENTO_DATA.centro)
-            .setHTML('<div style="background: rgba(26, 26, 26, 0.95); padding: 20px; border-radius: 12px; text-align: center; font-family: Arial, sans-serif;"><div style="width: 40px; height: 40px; border: 4px solid #D4AF37; border-top-color: #D4AF37; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #fff; font-size: 14px; font-weight: 600;">Buscando rota...</div></div>')
+            .setHTML('<div style="background: rgba(26, 26, 26, 0.95); padding: 20px; border-radius: 12px; text-align: center; font-family: Arial, sans-serif;"><div style="width: 40px; height: 40px; border: 4px solid rgba(212, 175, 55, 0.2); border-top-color: #D4AF37; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div><div style="color: #fff; font-size: 14px; font-weight: 600;">Buscando rota...</div></div>')
             .addTo(map);
         
         // Adiciona animação de spin
