@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMapOne - Loteamentos Premium</title>
+    <title>Imap One - Loteamentos Premium</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { 
@@ -13,21 +13,22 @@
         }
         
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --secondary: #0ea5e9;
+            --primary: #D4AF37;
+            --primary-dark: #b8941e;
+            --secondary: #E8C56A;
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --dark: #0f172a;
-            --dark-light: #1e293b;
-            --gray: #64748b;
-            --light: #f1f5f9;
+            --dark: #121212;
+            --dark-light: #181818;
+            --medium-gray: #242424;
+            --gray: #A0A0A0;
+            --light: #EAEAEA;
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            background: linear-gradient(135deg, #121212 0%, #181818 50%, #242424 100%);
             color: #fff;
             min-height: 100vh;
             overflow-x: hidden;
@@ -38,9 +39,9 @@
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(18, 18, 18, 0.98);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
             padding: 1.5rem 0;
         }
         
@@ -63,7 +64,7 @@
         
         .brand-text h1 {
             font-size: 1.8rem;
-            background: linear-gradient(135deg, #fff 0%, var(--secondary) 100%);
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: 800;
@@ -99,8 +100,8 @@
         #search-input {
             width: 100%;
             padding: 0.875rem 3rem 0.875rem 3rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(212, 175, 55, 0.05);
+            border: 2px solid rgba(212, 175, 55, 0.2);
             border-radius: 12px;
             color: #fff;
             font-size: 0.95rem;
@@ -110,8 +111,8 @@
         #search-input:focus {
             outline: none;
             border-color: var(--primary);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
         }
         
         #search-input::placeholder {
@@ -132,7 +133,7 @@
         }
         
         .clear-search:hover {
-            color: #fff;
+            color: var(--primary);
         }
         
         /* Stats */
@@ -174,7 +175,7 @@
         .loading-spinner {
             width: 60px;
             height: 60px;
-            border: 4px solid rgba(37, 99, 235, 0.2);
+            border: 4px solid rgba(212, 175, 55, 0.2);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
@@ -204,8 +205,8 @@
         
         /* Card de Loteamento */
         .loteamento-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(212, 175, 55, 0.03);
+            border: 1px solid rgba(212, 175, 55, 0.15);
             border-radius: 16px;
             padding: 0;
             overflow: hidden;
@@ -230,8 +231,8 @@
         .loteamento-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            border-color: rgba(37, 99, 235, 0.5);
-            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(212, 175, 55, 0.5);
+            background: rgba(212, 175, 55, 0.08);
         }
         
         .loteamento-card:hover::before {
@@ -258,8 +259,8 @@
             align-items: center;
             justify-content: center;
             font-size: 1.3rem;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
         }
         
         .card-title h2 {
@@ -292,25 +293,25 @@
         .info-icon {
             width: 32px;
             height: 32px;
-            background: rgba(37, 99, 235, 0.1);
+            background: rgba(212, 175, 55, 0.1);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--secondary);
+            color: var(--primary);
             font-size: 0.95rem;
         }
         
         .city-name {
-            color: var(--secondary);
+            color: var(--primary);
             font-weight: 600;
         }
         
         .card-footer {
             margin-top: auto;
             padding: 1.5rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
             display: flex;
             gap: 0.75rem;
         }
@@ -337,12 +338,13 @@
         
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: #fff;
+            color: #000;
+            font-weight: 700;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
         }
         
         .btn-whatsapp {
@@ -383,9 +385,9 @@
         }
         
         .status-badge.checking {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--warning);
-            border: 1px solid var(--warning);
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--primary);
+            border: 1px solid var(--primary);
         }
         
         .status-dot {
@@ -405,21 +407,21 @@
         .empty-state {
             text-align: center;
             padding: 5rem 2rem;
-            background: rgba(239, 68, 68, 0.05);
-            border: 2px dashed rgba(239, 68, 68, 0.3);
+            background: rgba(212, 175, 55, 0.05);
+            border: 2px dashed rgba(212, 175, 55, 0.3);
             border-radius: 16px;
             margin-top: 2rem;
         }
         
         .empty-icon {
             font-size: 4rem;
-            color: var(--danger);
+            color: var(--primary);
             margin-bottom: 1.5rem;
         }
         
         .empty-state h3 {
             font-size: 1.75rem;
-            color: var(--danger);
+            color: var(--primary);
             margin-bottom: 1rem;
         }
         
@@ -434,7 +436,7 @@
             text-align: center;
             margin-top: 5rem;
             padding: 3rem 2rem 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
         }
         
         .footer p {
@@ -483,7 +485,7 @@
         <div class="header-content">
             <div class="brand">
                 <div class="brand-text">
-                    <h1>iMapOne</h1>
+                    <h1>Imap One</h1>
                     <p>Loteamentos Premium</p>
                 </div>
             </div>
@@ -528,7 +530,7 @@
         <div id="loteamentos-container" class="loteamentos-grid" style="display: none;"></div>
         
         <div class="footer">
-            <p><strong>iMapOne</strong> - Tecnologia em Geolocalização</p>
+            <p><strong>Imap One</strong> - Tecnologia em Geolocalização</p>
             <p>Mapas Interativos de Alta Qualidade</p>
             <p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.7;">
                 Powered by GitHub Pages | Atualizado automaticamente
@@ -568,7 +570,6 @@
                 
                 document.getElementById('total-loteamentos').textContent = loteamentos.length;
                 
-                // Processa cada loteamento
                 for (const lote of loteamentos) {
                     const dadosLote = {
                         filename: lote.name,
@@ -604,14 +605,12 @@
                 
                 let lat, lng;
                 
-                // 🎯 Padrão 1: centro: [-40.8416, -2.8909] (LOTEAMENTO_DATA)
                 let match = html.match(/centro:\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
                 if (match) {
                     lng = parseFloat(match[1]);
                     lat = parseFloat(match[2]);
                 }
                 
-                // 🎯 Padrão 2: center: [-40.8416, -2.8909] (MapLibre)
                 if (!match) {
                     match = html.match(/center:\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
                     if (match) {
@@ -620,7 +619,6 @@
                     }
                 }
                 
-                // 🎯 Padrão 3: setView([lat, lng], zoom) (Leaflet)
                 if (!match) {
                     match = html.match(/setView\(\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
                     if (match) {
@@ -629,7 +627,6 @@
                     }
                 }
                 
-                // 🎯 Padrão 4: CENTRO_LOTEAMENTO = [-40.8416, -2.8909] (Standalone com Supabase)
                 if (!match) {
                     match = html.match(/CENTRO_LOTEAMENTO\s*=\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\]/);
                     if (match) {
@@ -641,17 +638,15 @@
                 if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
                     console.log(`✅ Coordenadas: Lat ${lat}, Lng ${lng}`);
                     
-                    // Delay para evitar rate limit
                     await new Promise(resolve => setTimeout(resolve, 1500));
                     
-                    // API BigDataCloud (sem rate limit e mais confiável)
                     const geoResponse = await fetch(
                         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=pt`
                     );
                     
                     if (geoResponse.ok) {
                         const geoData = await geoResponse.json();
-                        console.log('📍 Localização:', geoData);
+                        console.log('🗺️ Localização:', geoData);
                         
                         const cidade = geoData.city || 
                                       geoData.locality || 
@@ -686,7 +681,6 @@
                 const response = await fetch(url);
                 const html = await response.text();
                 
-                // Busca número de WhatsApp no código
                 const whatsappMatch = html.match(/wa\.me\/(\d+)|whatsapp.*?(\d{11,})/i);
                 
                 if (whatsappMatch) {
@@ -824,7 +818,6 @@
             `;
         }
         
-        // Sistema de Busca
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('clear-search');
         
