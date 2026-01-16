@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { 
-            margin: 0; 
+            margin: 0;
             padding: 0; 
             box-sizing: border-box; 
         }
@@ -523,7 +523,7 @@
             <div class="loading-spinner"></div>
             <p class="loading-text">
                 <i class="fas fa-search"></i>
-                Buscando loteamentos disponíveis...
+                Buscando pastas de loteamentos...
             </p>
         </div>
         
@@ -533,7 +533,7 @@
             <p><strong>Imap One</strong> - Tecnologia em Geolocalização</p>
             <p>Mapas Interativos de Alta Qualidade</p>
             <p style="margin-top: 1.5rem; font-size: 0.85rem; opacity: 0.7;">
-                Powered by GitHub Pages | Atualizado automaticamente
+                Powered by GitHub Pages | Atualizado automaticamente (Folders Mode)
             </p>
         </div>
     </div>
@@ -556,10 +556,14 @@
                 
                 const files = await response.json();
                 
+                // MUDANÇA: Agora filtra por DIRETÓRIOS (pastas) e remove pastas de sistema/assets
                 const loteamentos = files.filter(file => 
-                    file.name.endsWith('.html') && 
-                    file.name !== 'index.html' &&
-                    !file.name.includes('test') &&
+                    file.type === 'dir' && 
+                    !file.name.startsWith('.') &&
+                    file.name !== 'assets' &&
+                    file.name !== 'images' &&
+                    file.name !== 'css' &&
+                    file.name !== 'js' &&
                     !file.name.includes('github_pages')
                 );
                 
@@ -569,14 +573,18 @@
                 }
                 
                 document.getElementById('total-loteamentos').textContent = loteamentos.length;
-                
+
                 for (const lote of loteamentos) {
+                    // URL para ler o conteúdo do index.html DENTRO da pasta
+                    const rawContentUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${lote.name}/index.html`;
+
                     const dadosLote = {
-                        filename: lote.name,
+                        filename: lote.name, // Nome da pasta
                         nome: formatarNome(lote.name),
                         icon: obterIcone(lote.name),
-                        cidade: await extrairCidade(lote.download_url),
-                        whatsapp: await extrairWhatsApp(lote.download_url),
+                        // Passamos a URL do arquivo dentro da pasta para extrair dados
+                        cidade: await extrairCidade(rawContentUrl),
+                        whatsapp: await extrairWhatsApp(rawContentUrl),
                         online: false
                     };
                     
@@ -601,6 +609,9 @@
         async function extrairCidade(url) {
             try {
                 const response = await fetch(url);
+                // Se o arquivo não existir dentro da pasta, retorna erro
+                if(!response.ok) return 'Localização não disponível';
+
                 const html = await response.text();
                 
                 let lat, lng;
@@ -636,9 +647,9 @@
                 }
                 
                 if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-                    console.log(`✅ Coordenadas: Lat ${lat}, Lng ${lng}`);
-                    
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    // console.log(`✅ Coordenadas: Lat ${lat}, Lng ${lng}`);
+                    // Pequeno delay para evitar rate limit da API de geo
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     
                     const geoResponse = await fetch(
                         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=pt`
@@ -646,7 +657,7 @@
                     
                     if (geoResponse.ok) {
                         const geoData = await geoResponse.json();
-                        console.log('🗺️ Localização:', geoData);
+                        // console.log('🗺️ Localização:', geoData);
                         
                         const cidade = geoData.city || 
                                       geoData.locality || 
@@ -656,10 +667,8 @@
                         const estado = geoData.principalSubdivision || '';
                         
                         if (cidade && estado) {
-                            console.log(`✅ Cidade: ${cidade} - ${estado}`);
                             return `${cidade} - ${estado}`;
                         } else if (cidade) {
-                            console.log(`✅ Cidade: ${cidade}`);
                             return cidade;
                         }
                     }
@@ -667,7 +676,6 @@
                     return `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
                 }
                 
-                console.warn('❌ Coordenadas não encontradas no HTML');
                 return 'Localização não disponível';
                 
             } catch (error) {
@@ -679,6 +687,7 @@
         async function extrairWhatsApp(url) {
             try {
                 const response = await fetch(url);
+                if(!response.ok) return null;
                 const html = await response.text();
                 
                 const whatsappMatch = html.match(/wa\.me\/(\d+)|whatsapp.*?(\d{11,})/i);
@@ -689,7 +698,6 @@
             } catch (error) {
                 console.error('Erro ao extrair WhatsApp:', error);
             }
-            
             return null;
         }
         
@@ -699,7 +707,7 @@
             
             container.innerHTML = '';
             let onlineCount = 0;
-            
+
             for (const lote of loteamentosFiltrados) {
                 const card = document.createElement('div');
                 card.className = 'loteamento-card';
@@ -713,7 +721,8 @@
                         Contato
                     </a>
                 ` : '';
-                
+
+                // MUDANÇA: O href aponta para a pasta (adicionando a barra / no final)
                 card.innerHTML = `
                     <span class="status-badge checking" id="status-${lote.filename}">
                         <span class="status-dot"></span>
@@ -742,14 +751,13 @@
                     </div>
                     
                     <div class="card-footer">
-                        <a href="${lote.filename}" class="btn btn-primary">
+                        <a href="${lote.filename}/" class="btn btn-primary">
                             <i class="fas fa-map"></i>
                             Ver Mapa
                         </a>
                         ${whatsappBtn}
                     </div>
                 `;
-                
                 container.appendChild(card);
                 
                 verificarDisponibilidade(lote.filename).then(online => {
@@ -784,10 +792,11 @@
             return 'fas fa-home';
         }
         
-        async function verificarDisponibilidade(filename) {
+        async function verificarDisponibilidade(folderName) {
             try {
-                const response = await fetch(filename, { method: 'HEAD' });
-                const statusEl = document.getElementById(`status-${filename}`);
+                // MUDANÇA: Verifica se o arquivo index.html existe DENTRO da pasta
+                const response = await fetch(`${folderName}/index.html`, { method: 'HEAD' });
+                const statusEl = document.getElementById(`status-${folderName}`);
                 
                 if (response.ok) {
                     statusEl.className = 'status-badge online';
@@ -799,9 +808,11 @@
                     return false;
                 }
             } catch (error) {
-                const statusEl = document.getElementById(`status-${filename}`);
-                statusEl.className = 'status-badge offline';
-                statusEl.innerHTML = '<span class="status-dot"></span>Erro';
+                const statusEl = document.getElementById(`status-${folderName}`);
+                if(statusEl) {
+                    statusEl.className = 'status-badge offline';
+                    statusEl.innerHTML = '<span class="status-dot"></span>Erro';
+                }
                 return false;
             }
         }
@@ -812,8 +823,8 @@
                     <div class="empty-icon">
                         <i class="fas fa-folder-open"></i>
                     </div>
-                    <h3>Nenhum loteamento encontrado</h3>
-                    <p>Faça upload de arquivos <strong>.html</strong> no repositório para vê-los aqui automaticamente.</p>
+                    <h3>Nenhuma pasta de loteamento encontrada</h3>
+                    <p>Crie pastas no repositório com um arquivo <strong>index.html</strong> dentro de cada uma.</p>
                 </div>
             `;
         }
@@ -837,14 +848,14 @@
             
             renderizarLoteamentos();
         });
-        
+
         clearBtn.addEventListener('click', () => {
             searchInput.value = '';
             clearBtn.style.display = 'none';
             loteamentosFiltrados = [...todosLoteamentos];
             renderizarLoteamentos();
         });
-        
+
         window.addEventListener('load', buscarLoteamentos);
     </script>
 </body>
